@@ -1,494 +1,277 @@
-<!doctype html>
-<html lang="en">
-
+<!DOCTYPE html>
+<html lang="hi">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Realtime Chat - Email Auth</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>निजी चैट एप्लिकेशन</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg: #0f172a;
-            --card: #0b1220;
-            --muted: #94a3b8;
-            --accent: #06b6d4
-        }
-
-        html,
         body {
-            height: 100%;
-            margin: 0;
-            font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial
+            font-family: 'Inter', sans-serif;
+            background-color: #e2e8f0; /* slategray-200 */
         }
-
-        body {
-            background: linear-gradient(180deg, #071026 0%, #071a2b 100%);
-            color: #e6eef6;
+        .chat-container {
+            max-width: 768px;
+            height: 90vh;
+            margin: auto;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px
-        }
-
-        .app {
-            width: 100%;
-            max-width: 860px;
-            background: rgba(255, 255, 255, 0.03);
+            flex-direction: column;
             border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 6px 30px rgba(2, 6, 23, 0.6)
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px
-        }
-
-        header h1 {
-            font-size: 18px;
-            margin: 0
-        }
-
-        .btn {
-            background: var(--accent);
-            color: #012;
-            appearance: none;
-            border: 0;
-            padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer
-        }
-
-        .muted {
-            color: var(--muted)
-        }
-
-        /* containers */
-        .container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.02);
-            padding: 12px;
-            border-radius: 10px
-        }
-
-        /* login */
-        #loginView {
-            display: flex;
-            gap: 12px;
-            align-items: center
-        }
-
-        .form {
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            width: 100%
+            gap: 0.75rem;
         }
-
-        .form input {
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            background: transparent;
-            color: inherit
+        .message {
+            max-width: 80%;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            word-wrap: break-word;
         }
-
-        .row {
-            display: flex;
-            gap: 8px
-        }
-
-        /* choose friend */
-        #chooseFriend {
-            display: none
-        }
-
-        /* chat */
-        #chatView {
-            display: none;
-            flex-direction: column;
-            height: 520px
-        }
-
-        .chatHeader {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03)
-        }
-
-        .messages {
-            flex: 1;
-            overflow: auto;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px
-        }
-
-        .msg {
-            max-width: 72%;
-            padding: 8px 10px;
-            border-radius: 10px;
-            position: relative
-        }
-
-        .mine {
+        .message-sent {
             align-self: flex-end;
-            background: linear-gradient(180deg, #b2f5ff 0%, #06b6d4 100%);
-            color: #032
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            border-bottom-right-radius: 4px;
         }
-
-        .other {
+        .message-received {
             align-self: flex-start;
-            background: rgba(255, 255, 255, 0.02);
-            color: var(--muted)
+            background-color: #f3f4f6; /* gray-100 */
+            color: #1f2937; /* gray-800 */
+            border-bottom-left-radius: 4px;
         }
-
-        .meta {
-            font-size: 11px;
-            color: var(--muted);
-            margin-top: 6px
+        .sender-name {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #4b5563; /* gray-600 */
+            margin-bottom: 0.25rem;
         }
-
-        .msg .del {
-            position: absolute;
-            right: 6px;
-            top: 6px;
-            background: transparent;
-            border: 0;
-            color: rgba(255, 255, 255, 0.5);
-            cursor: pointer
-        }
-
-        .composer {
-            display: flex;
-            gap: 8px;
-            padding: 10px;
-            border-top: 1px solid rgba(255, 255, 255, 0.03)
-        }
-
-        .composer input[type=text] {
-            flex: 1;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-            background: transparent;
-            color: inherit
-        }
-
-        footer {
-            font-size: 12px;
-            margin-top: 10px;
-            color: var(--muted)
-        }
-
-        @media (max-width:640px) {
-            .app {
-                padding: 12px
-            }
-
-            .messages {
-                padding: 8px
-            }
+        .chat-input {
+            border-top: 1px solid #e5e7eb; /* gray-200 */
+            padding: 1rem;
         }
     </style>
 </head>
+<body class="bg-gray-200 flex items-center justify-center min-h-screen p-4">
 
-<body>
-    <div class="app">
-        <header>
-            <h1>Realtime Chat</h1>
-            <div id="userArea">
-                <span id="userName" class="muted">Not signed in</span>
-                <button id="signOut" class="btn" style="display:none">Sign out</button>
-            </div>
-        </header>
-
-        <div class="container">
-            <!-- Login / Sign-in view -->
-            <div id="loginView" class="card">
-                <div style="width:60%">
-                    <h3>Sign in or create account</h3>
-                    <p class="muted">Use email & password. Username will be email local-part (before @).</p>
-                </div>
-                <div style="margin-left:auto;display:flex;flex-direction:column;gap:8px;align-items:flex-end;width:40%">
-                    <div class="form" id="authForms">
-                        <input id="emailInput" type="email" placeholder="you@example.com" />
-                        <input id="passwordInput" type="password" placeholder="password (min 6 chars)" />
-                        <div class="row">
-                            <button id="signUpBtn" class="btn">Create account</button>
-                            <button id="signInBtn" class="btn">Sign in</button>
-                        </div>
-                        <small class="muted">Tip: Use simple email like lalit00@example.com for testing.</small>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Choose friend -->
-            <div id="chooseFriend" class="card">
-                <h3>Enter friend's username</h3>
-                <p class="muted">Type the username (their email local part) of the person you want to chat with.</p>
-                <div style="display:flex;gap:8px">
-                    <input id="friendInput" type="text" placeholder="friend username (e.g. lalit00)" />
-                    <button id="openChat" class="btn">Open Chat</button>
-                </div>
-            </div>
-
-            <!-- Chat view -->
-            <div id="chatView" class="card" style="display:flex">
-                <div style="display:flex;flex-direction:column;width:100%">
-                    <div class="chatHeader">
-                        <div>
-                            <strong id="chatWith">Chat</strong>
-                            <div id="chatId" class="muted" style="font-size:12px"></div>
-                        </div>
-                        <div>
-                            <span id="meLabel" class="muted"></span>
-                        </div>
-                    </div>
-
-                    <div class="messages" id="messages"></div>
-
-                    <div class="composer">
-                        <input id="messageInput" type="text" placeholder="Type a message..." />
-                        <button id="sendBtn" class="btn">Send</button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <footer>Made with Firebase + Firestore — Replace firebaseConfig below with your project values.</footer>
+    <div id="auth-container" class="p-8 bg-white rounded-xl shadow-lg w-full max-w-sm text-center">
+        <h1 class="text-2xl font-bold mb-4 text-gray-800">यूजरनेम दर्ज करें</h1>
+        <input type="text" id="username-input" placeholder="अपना यूजरनेम..." class="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4">
+        <button id="set-username-btn" class="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition-colors">शुरू करें</button>
     </div>
 
-    <!-- Firebase v9 modular SDKs from CDN -->
+    <div id="chat-container" class="hidden chat-container bg-white">
+        <!-- Header -->
+        <div class="bg-blue-600 text-white p-4 flex justify-between items-center rounded-t-lg">
+            <h1 class="text-xl font-semibold">निजी चैट</h1>
+            <span id="current-user-id" class="text-sm bg-blue-700 px-3 py-1 rounded-full cursor-pointer hover:bg-blue-800 transition-colors" title="अपना यूजर आईडी कॉपी करने के लिए क्लिक करें">आपका ID: लोडिंग...</span>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="p-4 bg-gray-50 flex-grow overflow-y-auto rounded-b-lg" id="messages-container">
+            <p class="text-center text-gray-400 my-4">किसी से चैट शुरू करने के लिए, उनका यूजर ID दर्ज करें।</p>
+        </div>
+
+        <!-- Chat Input -->
+        <form id="chat-form" class="bg-white p-4 flex gap-2 border-t border-gray-200 rounded-b-lg">
+            <input type="text" id="recipient-id-input" placeholder="दूसरे यूजर का ID..." class="flex-grow p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="button" id="start-chat-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">चैट शुरू करें</button>
+        </form>
+
+        <form id="message-form" class="bg-white p-4 flex gap-2 border-t border-gray-200 rounded-b-lg hidden">
+            <input type="text" id="message-input" placeholder="एक संदेश लिखें..." class="flex-grow p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="submit" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-semibold">भेजें</button>
+        </form>
+
+    </div>
+
     <script type="module">
-        // --- CONFIGURE: Replace with your Firebase project's config ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, serverTimestamp, query, orderBy, where, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase configuration from user and global variables
         const firebaseConfig = {
             apiKey: "AIzaSyDE8zApy4owfoFlgrbB80LSCEVxRWAvqcc",
             authDomain: "lalitapp-5cdf0.firebaseapp.com",
             databaseURL: "https://lalitapp-5cdf0-default-rtdb.firebaseio.com",
             projectId: "lalitapp-5cdf0",
-            storageBucket: "lalitapp-5cdf0.appspot.com",
+            storageBucket: "lalitapp-5cdf0.firebasestorage.app",
             messagingSenderId: "296397903515",
             appId: "1:296397903515:web:efe85353eb8f548243d83e"
         };
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
         // UI elements
-        const userNameEl = document.getElementById('userName');
-        const signOutBtn = document.getElementById('signOut');
-        const loginView = document.getElementById('loginView');
-        const chooseFriend = document.getElementById('chooseFriend');
-        const chatView = document.getElementById('chatView');
-        const friendInput = document.getElementById('friendInput');
-        const openChat = document.getElementById('openChat');
-        const chatWith = document.getElementById('chatWith');
-        const chatIdEl = document.getElementById('chatId');
-        const messagesEl = document.getElementById('messages');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const meLabel = document.getElementById('meLabel');
-
-        const emailInput = document.getElementById('emailInput');
-        const passwordInput = document.getElementById('passwordInput');
-        const signUpBtn = document.getElementById('signUpBtn');
-        const signInBtn = document.getElementById('signInBtn');
+        const authContainer = document.getElementById('auth-container');
+        const usernameInput = document.getElementById('username-input');
+        const setUsernameBtn = document.getElementById('set-username-btn');
+        const chatContainer = document.getElementById('chat-container');
+        const currentUserIdSpan = document.getElementById('current-user-id');
+        const messagesContainer = document.getElementById('messages-container');
+        const chatForm = document.getElementById('chat-form');
+        const recipientIdInput = document.getElementById('recipient-id-input');
+        const startChatBtn = document.getElementById('start-chat-btn');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
 
         let currentUser = null;
-        let currentUsername = null; // derived from email local part
-        let activeChatId = null;
-        let unsubscribeMessages = null;
+        let username = '';
+        let recipientId = '';
+        let unsubscribeFromChat = null;
 
-        function deriveUsernameFromEmail(email) {
-            if (!email) return null;
-            return email.split('@')[0].toLowerCase().replace(/[^a-z0-9._-]/g, '');
-        }
+        // Function to create a consistent chat ID for two users
+        const getChatId = (id1, id2) => {
+            return [id1, id2].sort().join('_');
+        };
 
-        // Sign up
-        signUpBtn.addEventListener('click', async () => {
-            const email = (emailInput.value || '').trim();
-            const pwd = (passwordInput.value || '');
-            if (!email || pwd.length < 6) { alert('Enter valid email and password (min 6 chars)'); return; }
-            try {
-                await createUserWithEmailAndPassword(auth, email, pwd);
-                emailInput.value = '';
-                passwordInput.value = '';
-            } catch (e) { alert('Sign-up failed: ' + e.message); }
-        });
+        // Function to set up the user profile in Firestore
+        const setupUser = async (userId, userName) => {
+            const userRef = doc(db, `/artifacts/${appId}/users/${userId}/profile`, 'info');
+            await setDoc(userRef, {
+                userId: userId,
+                username: userName,
+                lastSeen: serverTimestamp()
+            }, { merge: true });
+        };
 
-        // Sign in
-        signInBtn.addEventListener('click', async () => {
-            const email = (emailInput.value || '').trim();
-            const pwd = (passwordInput.value || '');
-            if (!email || pwd.length < 6) { alert('Enter valid email and password (min 6 chars)'); return; }
-            try {
-                await signInWithEmailAndPassword(auth, email, pwd);
-                emailInput.value = '';
-                passwordInput.value = '';
-            } catch (e) { alert('Sign-in failed: ' + e.message); }
-        });
-
-        // Sign out
-        signOutBtn.addEventListener('click', async () => {
-            await fbSignOut(auth);
-            // reset UI
-            userNameEl.textContent = 'Not signed in';
-            loginView.style.display = 'flex';
-            chooseFriend.style.display = 'none';
-            chatView.style.display = 'none';
-            signOutBtn.style.display = 'none';
-            meLabel.textContent = '';
-            if (unsubscribeMessages) unsubscribeMessages();
-            currentUser = null; currentUsername = null; activeChatId = null;
-        });
-
-        // After login, hide login view and show choose friend
-        onAuthStateChanged(auth, user => {
-            currentUser = user;
-            if (user) {
-                const derived = deriveUsernameFromEmail(user.email);
-                currentUsername = derived;
-                userNameEl.textContent = derived + ' (' + user.email + ')';
-                loginView.style.display = 'none';
-                chooseFriend.style.display = 'block';
-                chatView.style.display = 'none';
-                signOutBtn.style.display = 'inline-block';
-                meLabel.textContent = 'You: ' + currentUsername;
-            } else {
-                // not signed in
-                userNameEl.textContent = 'Not signed in';
-                loginView.style.display = 'flex';
-                chooseFriend.style.display = 'none';
-                chatView.style.display = 'none';
-                signOutBtn.style.display = 'none';
-                meLabel.textContent = '';
-            }
-        });
-
-        // Create deterministic chatId from two usernames
-        function makeChatId(a, b) {
-            const arr = [a.toLowerCase(), b.toLowerCase()].sort();
-            return arr.join('_');
-        }
-
-        openChat.addEventListener('click', () => {
-            const friend = (friendInput.value || '').trim().toLowerCase();
-            if (!friend) { alert('Enter friend username'); return; }
-            if (!currentUsername) { alert('You must be signed in'); return; }
-            if (friend === currentUsername) { alert('You cannot chat with yourself'); return; }
-            startChatWith(friend);
-        });
-
-        function clearMessagesUI() { messagesEl.innerHTML = ''; }
-
-        function renderMessage(docSnap) {
-            const data = docSnap.data();
-            const el = document.createElement('div');
-            el.classList.add('msg');
-            const mine = data.uid === currentUser.uid;
-            el.classList.add(mine ? 'mine' : 'other');
-
-            const textNode = document.createElement('div');
-            textNode.textContent = data.text || '';
-            el.appendChild(textNode);
-
-            const meta = document.createElement('div');
-            meta.className = 'meta';
-            const name = data.username || 'unknown';
-            const time = data.createdAt && data.createdAt.toDate ? new Date(data.createdAt.toDate()).toLocaleString() : (data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleString() : '');
-            meta.textContent = name + (time ? ' • ' + time : '');
-            el.appendChild(meta);
-
-            // delete button if mine
-            if (mine) {
-                const del = document.createElement('button');
-                del.textContent = '✖';
-                del.className = 'del';
-                del.title = 'Delete message';
-                del.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    if (confirm('Delete this message?')) {
-                        await deleteDoc(doc(db, 'chats', activeChatId, 'messages', docSnap.id));
-                    }
-                });
-                el.appendChild(del);
+        // Function to listen for chat messages
+        const listenForMessages = (chatId) => {
+            if (unsubscribeFromChat) {
+                unsubscribeFromChat();
             }
 
-            return el;
-        }
+            const messagesRef = collection(db, `/artifacts/${appId}/public/data/chats/${chatId}/messages`);
+            const q = query(messagesRef, orderBy("timestamp", "asc"));
 
-        // Start listening to messages of a chat
-        function startChatWith(friendUsername) {
-            if (unsubscribeMessages) unsubscribeMessages();
-            activeChatId = makeChatId(currentUsername, friendUsername);
-            chatWith.textContent = 'Chat with: ' + friendUsername;
-            chatIdEl.textContent = 'Room: ' + activeChatId;
-            loginView.style.display = 'none';
-            chooseFriend.style.display = 'none';
-            chatView.style.display = 'flex';
-            clearMessagesUI();
+            unsubscribeFromChat = onSnapshot(q, (snapshot) => {
+                messagesContainer.innerHTML = '';
+                if (snapshot.empty) {
+                    messagesContainer.innerHTML = '<p class="text-center text-gray-400 my-4">अभी तक कोई संदेश नहीं। अपना पहला संदेश भेजें।</p>';
+                } else {
+                    snapshot.docs.forEach(doc => {
+                        const messageData = doc.data();
+                        const messageDiv = document.createElement('div');
+                        messageDiv.classList.add('message');
 
-            const messagesRef = collection(db, 'chats', activeChatId, 'messages');
-            const q = query(messagesRef, orderBy('createdAt'));
+                        if (messageData.senderId === currentUser.uid) {
+                            messageDiv.classList.add('message-sent');
+                        } else {
+                            messageDiv.classList.add('message-received');
+                            const senderNameSpan = document.createElement('span');
+                            senderNameSpan.classList.add('sender-name');
+                            senderNameSpan.textContent = messageData.senderName;
+                            messageDiv.appendChild(senderNameSpan);
+                        }
 
-            unsubscribeMessages = onSnapshot(q, snap => {
-                clearMessagesUI();
-                snap.forEach(docSnap => {
-                    const el = renderMessage(docSnap);
-                    messagesEl.appendChild(el);
-                });
-                messagesEl.scrollTop = messagesEl.scrollHeight;
-            }, err => {
-                console.error('Listen error', err);
+                        const textP = document.createElement('p');
+                        textP.textContent = messageData.text;
+                        messageDiv.appendChild(textP);
+
+                        messagesContainer.appendChild(messageDiv);
+                    });
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
             });
-        }
+        };
 
-        // Send message
-        sendBtn.addEventListener('click', async () => {
-            const text = messageInput.value.trim();
-            if (!text) return;
-            if (!activeChatId) { alert('Open a chat first'); return; }
-            const messagesRef = collection(db, 'chats', activeChatId, 'messages');
-            try {
+        // Event listener for setting username
+        setUsernameBtn.addEventListener('click', async () => {
+            const userNameValue = usernameInput.value.trim();
+            if (userNameValue) {
+                username = userNameValue;
+                // Transition UI
+                authContainer.classList.add('hidden');
+                chatContainer.classList.remove('hidden');
+                // The onAuthStateChanged listener will handle the rest
+            } else {
+                alert('कृपया अपना यूजरनेम दर्ज करें।');
+            }
+        });
+
+        // Event listener for starting a new chat
+        startChatBtn.addEventListener('click', () => {
+            const recipientIdValue = recipientIdInput.value.trim();
+            if (recipientIdValue && recipientIdValue !== currentUser.uid) {
+                recipientId = recipientIdValue;
+                const chatId = getChatId(currentUser.uid, recipientId);
+                listenForMessages(chatId);
+
+                // Switch UI to show message input
+                chatForm.classList.add('hidden');
+                messageForm.classList.remove('hidden');
+            } else {
+                alert('कृपया दूसरे यूजर का सही ID दर्ज करें।');
+            }
+        });
+
+        // Event listener for sending a message
+        messageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const messageText = messageInput.value.trim();
+
+            if (messageText && currentUser && recipientId) {
+                const chatId = getChatId(currentUser.uid, recipientId);
+                const messagesRef = collection(db, `/artifacts/${appId}/public/data/chats/${chatId}/messages`);
+
                 await addDoc(messagesRef, {
-                    text,
-                    uid: currentUser.uid,
-                    username: currentUsername,
-                    createdAt: serverTimestamp()
+                    senderId: currentUser.uid,
+                    senderName: username,
+                    recipientId: recipientId,
+                    text: messageText,
+                    timestamp: serverTimestamp()
                 });
                 messageInput.value = '';
-            } catch (e) { console.error(e); alert('Send failed: ' + e.message); }
+            }
         });
 
-        // Press Enter to send
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); sendBtn.click(); }
+        // Copy user ID to clipboard
+        currentUserIdSpan.addEventListener('click', () => {
+            const userIdText = currentUserIdSpan.textContent.replace('आपका ID: ', '');
+            navigator.clipboard.writeText(userIdText).then(() => {
+                alert('यूजर ID कॉपी हो गया!');
+            }).catch(err => {
+                console.error('Copy failed', err);
+                alert('ID कॉपी करने में विफल रहा।');
+            });
         });
 
-        // Helper: If user visits chat via URL like ?chat=lalit00, prefill
-        function tryPrefillFromURL() {
-            const params = new URLSearchParams(location.search);
-            const chatParam = params.get('chat');
-            if (chatParam) friendInput.value = chatParam;
-        }
-        tryPrefillFromURL();
-
+        // Firebase Auth State Listener
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                // If a username was set, set up the user profile
+                if (username) {
+                    await setupUser(currentUser.uid, username);
+                }
+                currentUserIdSpan.textContent = `आपका ID: ${currentUser.uid}`;
+            } else {
+                // Initial sign-in
+                if (initialAuthToken) {
+                    try {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } catch (error) {
+                        console.error("Error signing in with custom token:", error);
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            }
+        });
     </script>
 </body>
-
 </html>
